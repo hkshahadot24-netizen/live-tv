@@ -1,0 +1,319 @@
+```html
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live TV Player</title>
+    <!-- HLS.js for .m3u8 streaming -->
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --surface-color: #1e293b;
+            --primary-color: #38bdf8;
+            --text-color: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* Top Section (Player + Search) - Sticky to stay on top while scrolling */
+        .top-section {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background-color: var(--bg-color);
+            padding: 15px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Player Wrapper */
+        .player-wrapper {
+            width: 100%;
+            max-width: 900px;
+            margin: 0 auto;
+            background: #000;
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+            /* 16:9 Aspect Ratio */
+            aspect-ratio: 16 / 9; 
+        }
+
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            background-color: #000;
+        }
+
+        .current-channel-info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 5px 12px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #fff;
+            backdrop-filter: blur(4px);
+            pointer-events: none;
+        }
+
+        /* Search Bar Area */
+        .search-container {
+            max-width: 900px;
+            margin: 15px auto 0 auto;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 14px 20px;
+            border-radius: 30px;
+            border: 2px solid var(--surface-color);
+            background-color: var(--surface-color);
+            color: var(--text-color);
+            font-size: 16px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2);
+        }
+
+        .search-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        /* Channel List Area */
+        .list-section {
+            flex: 1;
+            padding: 20px 15px;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .channel-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 15px;
+        }
+
+        .channel-card {
+            background-color: var(--surface-color);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 15px 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.2s, background-color 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 80px;
+            font-weight: 500;
+            font-size: 15px;
+            word-break: break-word;
+        }
+
+        .channel-card:hover {
+            background-color: #27354f;
+            transform: translateY(-3px);
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .channel-card.active {
+            background-color: var(--primary-color);
+            color: #000;
+            font-weight: bold;
+            box-shadow: 0 4px 10px rgba(56, 189, 248, 0.4);
+        }
+
+        /* Error/Loading text */
+        .status-message {
+            text-align: center;
+            color: var(--text-muted);
+            padding: 40px;
+            grid-column: 1 / -1;
+            font-size: 18px;
+        }
+
+        /* Responsive adjustments */
+        @media (min-width: 768px) {
+            .channel-grid {
+                grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Sticky Top Section: Player + Search -->
+    <div class="top-section">
+        <!-- Video Player -->
+        <div class="player-wrapper">
+            <div class="current-channel-info" id="current-channel-name">প্লে করার জন্য অপেক্ষা করুন...</div>
+            <video id="video-player" controls autoplay playsinline></video>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="search-container">
+            <input type="text" id="search-box" class="search-input" placeholder="চ্যানেলের নাম লিখে খুঁজুন... (যেমন: Sports, Bangla)">
+        </div>
+    </div>
+
+    <!-- Scrollable Channel List -->
+    <div class="list-section">
+        <div class="channel-grid" id="channel-grid">
+            <div class="status-message">চ্যানেল লিস্ট লোড হচ্ছে...</div>
+        </div>
+    </div>
+
+    <script>
+        const videoElement = document.getElementById('video-player');
+        const channelGrid = document.getElementById('channel-grid');
+        const searchBox = document.getElementById('search-box');
+        const currentChannelName = document.getElementById('current-channel-name');
+        
+        let allChannels = [];
+        let hls = null;
+        let activeCardElement = null;
+
+        // Load JSON Data
+        async function fetchChannels() {
+            try {
+                // Fetch from your local Channels_data.json file
+                const response = await fetch('Channels_data.json');
+                if (!response.ok) throw new Error("JSON file not found");
+                
+                const data = await response.json();
+                allChannels = data.channels || [];
+                
+                if (allChannels.length > 0) {
+                    renderChannels(allChannels);
+                    // Auto-play the first channel
+                    playStream(allChannels[0].url, allChannels[0].name, channelGrid.firstChild);
+                } else {
+                    channelGrid.innerHTML = '<div class="status-message">কোনো চ্যানেল পাওয়া যায়নি!</div>';
+                }
+            } catch (error) {
+                console.error("ডেটা লোড এরর:", error);
+                channelGrid.innerHTML = '<div class="status-message">Channels_data.json ফাইলটি লোড করতে সমস্যা হয়েছে। ফাইলটি সঠিক জায়গায় আছে কিনা চেক করুন।</div>';
+                currentChannelName.innerText = 'ডেটা এরর!';
+            }
+        }
+
+        // Render Channels into Grid
+        function renderChannels(channelsToRender) {
+            channelGrid.innerHTML = ''; // Clear current list
+
+            if (channelsToRender.length === 0) {
+                channelGrid.innerHTML = '<div class="status-message">আপনার খোঁজা চ্যানেলটি পাওয়া যায়নি।</div>';
+                return;
+            }
+
+            channelsToRender.forEach(channel => {
+                const card = document.createElement('div');
+                card.className = 'channel-card';
+                card.innerText = channel.name;
+                
+                // Add click event to play channel
+                card.onclick = () => playStream(channel.url, channel.name, card);
+                
+                channelGrid.appendChild(card);
+            });
+        }
+
+        // Play HLS/M3U8 Stream
+        function playStream(url, name, cardElement) {
+            // Update UI
+            currentChannelName.innerText = name;
+            document.title = `${name} - Live TV`;
+
+            // Handle Active Styling
+            if (activeCardElement) {
+                activeCardElement.classList.remove('active');
+            }
+            if (cardElement) {
+                cardElement.classList.add('active');
+                activeCardElement = cardElement;
+            } else {
+                // If searched and played, try to find the active card in the current view
+                const cards = document.querySelectorAll('.channel-card');
+                cards.forEach(c => {
+                    if(c.innerText === name) {
+                        c.classList.add('active');
+                        activeCardElement = c;
+                    }
+                });
+            }
+
+            // HLS.js logic for playing .m3u8 files
+            if (Hls.isSupported()) {
+                if (hls) { hls.destroy(); } // Destroy previous instance
+                
+                hls = new Hls({
+                    maxMaxBufferLength: 30, // buffering settings
+                });
+                
+                hls.loadSource(url);
+                hls.attachMedia(videoElement);
+                hls.on(Hls.Events.MANIFEST_PARSED, function() {
+                    videoElement.play().catch(e => console.log("Autoplay prevented:", e));
+                });
+                
+                hls.on(Hls.Events.ERROR, function (event, data) {
+                    if (data.fatal) {
+                        console.error('HLS Error:', data);
+                        currentChannelName.innerText = `${name} (স্ট্রিম অফলাইন/এরর)`;
+                    }
+                });
+            } 
+            // Fallback for native HLS support (Safari/iOS)
+            else if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
+                videoElement.src = url;
+                videoElement.addEventListener('loadedmetadata', function() {
+                    videoElement.play().catch(e => console.log("Autoplay prevented:", e));
+                });
+            } else {
+                currentChannelName.innerText = "আপনার ব্রাউজার HLS সাপোর্ট করে না!";
+            }
+        }
+
+        // Search Functionality
+        searchBox.addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase();
+            const filteredChannels = allChannels.filter(channel => 
+                channel.name.toLowerCase().includes(query)
+            );
+            renderChannels(filteredChannels);
+        });
+
+        // Start Application
+        window.onload = fetchChannels;
+
+    </script>
+</body>
+</html>
+
+```
