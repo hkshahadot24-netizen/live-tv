@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -54,7 +53,7 @@
             width: 100%;
         }
 
-        /* Video Player Wrapper */
+        /* Video Player Wrapper (Pinch & Zoom Friendly Container) */
         .player-container {
             width: 100%;
             background: #000;
@@ -64,25 +63,17 @@
             aspect-ratio: 16 / 9;
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
             border: 1px solid var(--border-color);
-            touch-action: none;
+            touch-action: none; /* Prevents default browser scrolling when pinching/dragging */
         }
 
+        /* Video element styled to support transformations */
         video {
             width: 100%;
             height: 100%;
             background-color: #000;
             transform-origin: center center;
             transition: transform 0.1s ease-out;
-            pointer-events: none;
-        }
-
-        /* Fullscreen styles to fix zoom/styling issues when in fullscreen */
-        .player-container:fullscreen video {
-            pointer-events: auto; /* Re-enable for native controls */
-        }
-        .player-container:fullscreen {
-            border-radius: 0;
-            border: none;
+            pointer-events: none; /* Allows pointer events to bypass the video to the container */
         }
 
         .channel-badge {
@@ -119,14 +110,13 @@
             z-index: 10;
         }
 
-        /* Pro Toolbar */
+        /* Pro Toolbar (Quality Selector Only) */
         .pro-toolbar {
             display: flex;
             justify-content: flex-end;
             align-items: center;
             background: transparent;
             padding: 10px 5px 0 5px;
-            gap: 15px;
         }
 
         .toolbar-group {
@@ -161,24 +151,6 @@
         select.quality-select option {
             background: var(--surface-color);
             color: var(--text-main);
-        }
-
-        /* Full Screen Button */
-        #fullscreen-btn {
-            background: var(--primary-color);
-            color: #000;
-            border: none;
-            padding: 6px 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 12px;
-            transition: all 0.2s;
-        }
-
-        #fullscreen-btn:hover {
-            box-shadow: 0 0 10px var(--primary-glow);
-            transform: translateY(-1px);
         }
 
         /* Search Box */
@@ -222,11 +194,11 @@
             display: flex;
             gap: 8px;
             padding-bottom: 5px;
-            scrollbar-width: none;
+            scrollbar-width: none; /* Firefox */
         }
 
         .categories-container::-webkit-scrollbar {
-            display: none;
+            display: none; /* Safari and Chrome */
         }
 
         .category-tab {
@@ -265,16 +237,6 @@
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
             gap: 12px;
-        }
-
-        .category-header {
-            grid-column: 1 / -1;
-            margin: 15px 0 5px;
-            font-size: 16px;
-            color: var(--primary-color);
-            font-weight: 600;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 8px;
         }
 
         .channel-card {
@@ -318,7 +280,7 @@
             font-size: 15px;
         }
 
-        /* Footer */
+        /* Footer / About Me */
         .footer {
             background: var(--surface-color);
             border-top: 1px solid var(--border-color);
@@ -377,8 +339,6 @@
                         <option value="-1">Auto (Best)</option>
                     </select>
                 </div>
-                <!-- Full Screen Button -->
-                <button id="fullscreen-btn">⛶ Full Screen</button>
             </div>
 
             <!-- Real-time Interactive Search Bar -->
@@ -420,7 +380,6 @@
         const searchBox = document.getElementById('search-box');
         const channelBadge = document.getElementById('channel-badge');
         const zoomBadge = document.getElementById('zoom-badge');
-        const fullscreenBtn = document.getElementById('fullscreen-btn');
         
         const qualityWrapper = document.getElementById('quality-wrapper');
         const qualitySelector = document.getElementById('quality-selector');
@@ -429,7 +388,6 @@
         let hls = null;
         let activeCard = null;
         let activeCategory = 'ALL';
-        let currentPlayingChannelName = '';
 
         // Variables for Pinch-to-Zoom & Dragging
         let scale = 1;
@@ -454,14 +412,17 @@
 
         // Initialize Pinch-to-Zoom gestures
         function initPinchToZoom() {
+            // Touch Interaction for Mobile Devices
             playerContainer.addEventListener('touchstart', (e) => {
                 if (e.touches.length === 2) {
+                    // Start Pinch Action
                     startScale = scale;
                     startDistance = Math.hypot(
                         e.touches[0].pageX - e.touches[1].pageX,
                         e.touches[0].pageY - e.touches[1].pageY
                     );
                 } else if (e.touches.length === 1 && scale > 1.01) {
+                    // Start Drag Action (Only allow drag if zoomed in)
                     isDragging = true;
                     lastTouchX = e.touches[0].pageX;
                     lastTouchY = e.touches[0].pageY;
@@ -470,6 +431,7 @@
 
             playerContainer.addEventListener('touchmove', (e) => {
                 if (e.touches.length === 2) {
+                    // Execute Pinch Zoom
                     const distance = Math.hypot(
                         e.touches[0].pageX - e.touches[1].pageX,
                         e.touches[0].pageY - e.touches[1].pageY
@@ -477,6 +439,7 @@
                     scale = Math.max(0.5, Math.min(4, startScale * (distance / startDistance)));
                     applyTransformations();
                 } else if (e.touches.length === 1 && isDragging) {
+                    // Execute Dragging while Zoomed
                     const deltaX = e.touches[0].pageX - lastTouchX;
                     const deltaY = e.touches[0].pageY - lastTouchY;
                     translateX += deltaX;
@@ -488,8 +451,14 @@
             }, { passive: true });
 
             playerContainer.addEventListener('touchend', (e) => {
-                if (e.touches.length < 2) startDistance = 0;
-                if (e.touches.length === 0) isDragging = false;
+                if (e.touches.length < 2) {
+                    // Reset pinch reference
+                    startDistance = 0;
+                }
+                if (e.touches.length === 0) {
+                    isDragging = false;
+                }
+                // Optional: Smooth boundaries limits
                 boundTransformations();
             });
 
@@ -509,6 +478,7 @@
                 applyTransformations();
             }, { passive: false });
 
+            // Desktop Mouse Dragging Logic
             playerContainer.addEventListener('mousedown', (e) => {
                 if (scale > 1.01) {
                     isDragging = true;
@@ -607,6 +577,7 @@
                 }
             });
 
+            // If JSON does not contain categories directly, auto-group by name prefixes or defaults
             const sortedCategories = Array.from(categories).sort();
 
             sortedCategories.forEach(category => {
@@ -622,8 +593,10 @@
         // Category Tab Select Logic
         function selectCategory(category, tabElement) {
             activeCategory = category;
+            
             document.querySelectorAll('.category-tab').forEach(tab => tab.classList.remove('active'));
             tabElement.classList.add('active');
+
             filterAndRender();
         }
 
@@ -633,7 +606,9 @@
             
             const filtered = allChannels.filter(ch => {
                 const matchesSearch = ch.name.toLowerCase().includes(query);
-                const chCategory = (ch.category || ch.group || 'OTHER').toUpperCase().trim();
+                
+                // Get the channel's category field dynamically (supports category, group, etc.)
+                const chCategory = (ch.category || ch.group || 'ALL').toUpperCase().trim();
                 const matchesCategory = (activeCategory === 'ALL' || chCategory === activeCategory);
 
                 return matchesSearch && matchesCategory;
@@ -642,7 +617,7 @@
             renderGrid(filtered);
         }
 
-        // Grouped Render Channel Grid elements
+        // Render Channel Grid elements
         function renderGrid(channels) {
             channelGrid.innerHTML = '';
             
@@ -651,61 +626,33 @@
                 return;
             }
 
-            const grouped = {};
             channels.forEach(ch => {
-                const category = (ch.category || ch.group || 'OTHER').toUpperCase().trim();
-                if(!grouped[category]) {
-                    grouped[category] = [];
+                const card = document.createElement('div');
+                card.className = 'channel-card';
+                card.innerText = ch.name;
+                
+                // Keep active styling if this channel is currently playing
+                if (channelBadge.innerText === ch.name) {
+                    card.classList.add('active');
+                    activeCard = card;
                 }
-                grouped[category].push(ch);
-            });
 
-            Object.keys(grouped).sort().forEach(category => {
-                // Create Category Section Title
-                const title = document.createElement('h2');
-                title.className = 'category-header';
-                title.innerText = category;
-                channelGrid.appendChild(title);
-
-                // Add Channels under this category
-                grouped[category].forEach(ch => {
-                    const card = document.createElement('div');
-                    card.className = 'channel-card';
-                    card.innerText = ch.name;
-                    
-                    // Keep active styling if this channel is currently playing
-                    if (currentPlayingChannelName === ch.name) {
-                        card.classList.add('active');
-                        activeCard = card;
-                    }
-
-                    card.onclick = () => playChannel(ch.url, ch.name, card);
-                    channelGrid.appendChild(card);
-                });
+                card.onclick = () => playChannel(ch.url, ch.name, card);
+                channelGrid.appendChild(card);
             });
         }
 
         // Main Stream Playing Engine
         function playChannel(url, name, cardElement) {
             channelBadge.innerText = name;
-            currentPlayingChannelName = name;
             document.title = `${name} | Pro Live TV`;
-            resetZoom();
+            resetZoom(); // Reset video size when changing channels
 
             // Active Class Updates
             if (activeCard) activeCard.classList.remove('active');
             if (cardElement) {
                 cardElement.classList.add('active');
                 activeCard = cardElement;
-            } else {
-                // If called without element, try to find and activate it
-                const cards = document.querySelectorAll('.channel-card');
-                cards.forEach(c => {
-                    if(c.innerText === name) {
-                        c.classList.add('active');
-                        activeCard = c;
-                    }
-                });
             }
 
             qualityWrapper.style.display = 'none';
@@ -720,7 +667,7 @@
                 hls.on(Hls.Events.MANIFEST_PARSED, function(event, data) {
                     video.play().catch(e => console.log("Autoplay blocked"));
                     
-                    // Manage Live Video Quality levels
+                    // Manage Live Video Quality levels dynamically
                     const levels = hls.levels;
                     if (levels && levels.length > 1) {
                         qualityWrapper.style.display = 'flex';
@@ -739,14 +686,6 @@
                     }
                 });
 
-                // Update Badge with current quality resolution
-                hls.on(Hls.Events.LEVEL_SWITCHED, function(event, data) {
-                    const level = hls.levels[data.level];
-                    if(level && level.height){
-                        channelBadge.innerText = `${name} - ${level.height}p`;
-                    }
-                });
-
                 hls.on(Hls.Events.ERROR, function (event, data) {
                     if (data.fatal) {
                         console.error('Stream Error:', data);
@@ -755,6 +694,7 @@
                 });
 
             } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                // iOS / Safari Native Stream playing support
                 video.src = url;
                 video.addEventListener('loadedmetadata', () => {
                     video.play().catch(e => console.log("Autoplay blocked"));
@@ -774,41 +714,21 @@
         // Search Input Event Listeners
         searchBox.addEventListener('input', filterAndRender);
 
-        // Full Screen Button Event
-        fullscreenBtn.addEventListener("click", () => {
-            if (!document.fullscreenElement) {
-                playerContainer.requestFullscreen().catch(err => {
-                    console.log(`Error attempting to enable fullscreen: ${err.message}`);
-                });
-            } else {
-                document.exitFullscreen();
-            }
-        });
-
-        // Auto Rotate to Landscape on Fullscreen
-        document.addEventListener('fullscreenchange', () => {
-            if(document.fullscreenElement){
-                // Change Button text
-                fullscreenBtn.innerText = "✖ Exit Full Screen";
-                // Lock to Landscape on Android/Mobile
-                if(screen.orientation && screen.orientation.lock){
-                    screen.orientation.lock('landscape').catch(() => {
-                        // Orientation lock may fail if not triggered by user gesture or unsupported
-                        console.log("Landscape orientation lock not supported or failed.");
-                    });
-                }
-            } else {
-                // Change Button text back
-                fullscreenBtn.innerText = "⛶ Full Screen";
-                // Unlock orientation
-                if(screen.orientation && screen.orientation.unlock){
-                    screen.orientation.unlock();
-                }
-            }
-        });
-
         // Run Application
-        window.onload = () => {
+        
+// ===== Professional V2 Enhancements =====
+function autoDetectCategory(name){
+    const n=(name||'').toLowerCase();
+    if(n.includes('sport')||n.includes('willow')||n.includes('bein')||n.includes('ten ')||n.includes('t sports')) return 'SPORTS';
+    if(n.includes('news')||n.includes('tv')||n.includes('cnn')||n.includes('dw')||n.includes('ndtv')) return 'NEWS';
+    if(n.includes('quran')||n.includes('sunnah')||n.includes('madani')||n.includes('islam')) return 'ISLAMIC';
+    if(n.includes('kids')||n.includes('cartoon')||n.includes('doraemon')||n.includes('motu')) return 'KIDS';
+    if(n.includes('music')||n.includes('fm')||n.includes('9xm')) return 'MUSIC';
+    if(n.includes('movie')||n.includes('cinema')||n.includes('gold')) return 'MOVIES';
+    return 'OTHERS';
+}
+
+window.onload = () => {
             initPinchToZoom();
             loadChannelsData();
         };
@@ -816,5 +736,3 @@
     </script>
 </body>
 </html>
-
-```
