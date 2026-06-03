@@ -5,6 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>LIVE IP TV PRO - লাইভ টিভি প্লেয়ার</title>
     
+    <!-- PWA এবং iOS সাপোর্ট মেটা ট্যাগ -->
+    <meta name="theme-color" content="#090d16">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="LIVE IPTV PRO">
+    <link rel="apple-touch-icon" href="https://images.unsplash.com/photo-1594909122845-11baa439b7bf?q=80&w=192&auto=format&fit=crop">
+    
+    <!-- ওয়েব ম্যানিফেস্ট লিংক -->
+    <link rel="manifest" href="manifest.json">
+    
     <!-- Tailwind CSS UI স্টাইলিংয়ের জন্য -->
     <script src="https://cdn.tailwindcss.com"></script>
     
@@ -132,6 +142,11 @@
             </div>
             
             <div class="flex items-center gap-3">
+                <!-- PWA ইন্সটল বাটন (শুরুতে হাইড থাকবে, ব্রাউজার সাপোর্ট করলে দৃশ্যমান হবে) -->
+                <button id="pwa-install-btn" class="hidden text-slate-400 hover:text-green-400 transition-colors p-1" title="অ্যাপ ইন্সটল করুন">
+                    <i class="fa-solid fa-circle-arrow-down text-lg lg:text-xl animate-bounce"></i>
+                </button>
+
                 <!-- এবাউট বাটন -->
                 <button onclick="toggleAboutModal()" class="text-slate-400 hover:text-blue-400 transition-colors p-1" title="ডেভেলপার ইনফো">
                     <i class="fa-solid fa-circle-info text-lg lg:text-xl"></i>
@@ -266,6 +281,45 @@
         let startX = 0, startY = 0;
         let posX = 0, posY = 0, lastPosX = 0, lastPosY = 0;
         let isMultiTouch = false;
+
+        // PWA ইন্সটলেশন প্রোম্পট ভেরিয়েবল
+        let deferredPrompt;
+        const installBtn = document.getElementById('pwa-install-btn');
+
+        // PWA ইন্সটল প্রোম্পট হ্যান্ডলার
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            if (installBtn) {
+                installBtn.classList.remove('hidden');
+            }
+        });
+
+        if (installBtn) {
+            installBtn.addEventListener('click', async () => {
+                if (!deferredPrompt) return;
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                deferredPrompt = null;
+                installBtn.classList.add('hidden');
+            });
+        }
+
+        window.addEventListener('appinstalled', () => {
+            console.log('LIVE IP TV PRO successfully installed!');
+            if (installBtn) {
+                installBtn.classList.add('hidden');
+            }
+        });
+
+        // সার্ভিস ওয়ার্কার রেজিস্টার করা
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('Service Worker registered successfully!', reg.scope))
+                    .catch(err => console.log('Service Worker registration failed:', err));
+            });
+        }
 
         // এবাউট মডেল টগল ফাংশন
         function toggleAboutModal() {
