@@ -252,6 +252,22 @@
 
             player.hlsQualitySelector({ displayCurrentQuality: true });
 
+            // ফুলস্ক্রিন অটো-রোটেট ল্যান্ডস্কেপ মোড (মোবাইলের জন্য)
+            player.on('fullscreenchange', function() {
+                if (player.isFullscreen()) {
+                    if (screen.orientation && screen.orientation.lock) {
+                        screen.orientation.lock('landscape').catch(function(error) {
+                            console.warn("অটো-রোটেট সাপোর্ট করছে না:", error);
+                        });
+                    }
+                } else {
+                    if (screen.orientation && screen.orientation.unlock) {
+                        screen.orientation.unlock();
+                    }
+                    resetZoom();
+                }
+            });
+
             player.on('loadstart', () => updatePlayerStatus('loading'));
             player.on('waiting', () => updatePlayerStatus('buffering'));
             player.on('playing', () => updatePlayerStatus('playing'));
@@ -269,6 +285,10 @@
                     `;
                 }
             });
+
+            // জুমের জন্য ভিডিও এলিমেন্ট নির্ধারণ এবং ইভেন্ট সেটআপ
+            videoEl = player.el().querySelector('video');
+            setupPinchToZoom();
 
             // ইভেন্ট লিসেনার সেটআপ 
             document.getElementById('search-input').addEventListener('input', function(e) {
@@ -328,7 +348,8 @@
         }
 
         function setupPinchToZoom() {
-            const playerContainer = document.getElementById('my-video');
+            // Video.js এর মেইন কন্টেইনার
+            const playerContainer = player.el();
             if (!playerContainer) return;
 
             playerContainer.addEventListener('touchstart', function(e) {
@@ -350,7 +371,7 @@
 
                 if (e.touches.length === 2 && isMultiTouch) {
                     const currentDist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
-                    scale = Math.min(Math.max(1, (currentDist / startX) * lastScale), 4);
+                    scale = Math.min(Math.max(1, (currentDist / startX) * lastScale), 4); // Max 4x Zoom
                     updateVideoTransform();
                 } else if (e.touches.length === 1 && !isMultiTouch && scale > 1) {
                     posX = e.touches[0].pageX - startX;
@@ -366,7 +387,9 @@
         }
 
         function updateVideoTransform() {
-            if (videoEl) videoEl.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
+            if (videoEl) {
+                videoEl.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
+            }
         }
 
         function resetZoom() {
