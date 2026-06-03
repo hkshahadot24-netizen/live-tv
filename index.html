@@ -142,9 +142,9 @@
             </div>
             
             <div class="flex items-center gap-3">
-                <!-- PWA ইন্সটল বাটন (শুরুতে হাইড থাকবে, ব্রাউজার সাপোর্ট করলে দৃশ্যমান হবে) -->
-                <button id="pwa-install-btn" class="hidden text-slate-400 hover:text-green-400 transition-colors p-1" title="অ্যাপ ইন্সটল করুন">
-                    <i class="fa-solid fa-circle-arrow-down text-lg lg:text-xl animate-bounce"></i>
+                <!-- PWA ইন্সটল বাটন (সবসময় দৃশ্যমান থাকবে, ক্লিক করলে ইন্টেলিজেন্ট অ্যাকশন নিবে) -->
+                <button id="pwa-install-btn" class="text-slate-400 hover:text-green-400 transition-colors p-1" title="অ্যাপ ইন্সটল করুন">
+                    <i class="fa-solid fa-circle-arrow-down text-lg lg:text-xl animate-pulse text-green-500"></i>
                 </button>
 
                 <!-- এবাউট বাটন -->
@@ -262,6 +262,55 @@
         </div>
     </div>
 
+    <!-- PWA ম্যানুয়াল ইনস্টলেশন গাইড মোডাল (Install Guide Modal) -->
+    <div id="pwa-guide-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm hidden opacity-0 transition-opacity duration-300">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl p-6 w-[95%] max-w-md shadow-2xl transform scale-95 transition-transform duration-300 relative">
+            <!-- Close Button -->
+            <button onclick="togglePwaGuideModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors bg-slate-800 hover:bg-slate-700 rounded-full w-8 h-8 flex items-center justify-center">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+            
+            <div class="text-center mt-2">
+                <div class="w-14 h-14 bg-green-500/10 text-green-500 rounded-full flex items-center justify-center mx-auto mb-3 border border-green-500/20">
+                    <i class="fa-solid fa-mobile-screen-button text-2xl"></i>
+                </div>
+                <h3 class="text-lg font-bold text-white mb-1">সরাসরি মোবাইলে ইনস্টল করুন</h3>
+                <p class="text-xs text-slate-400 mb-5">কোনো প্লে-স্টোর ছাড়াই অ্যাপের মতো ব্যবহার করুন</p>
+                
+                <!-- নির্দেশাবলী ট্যাব -->
+                <div class="space-y-4 text-left text-sm text-slate-300">
+                    <!-- অ্যান্ড্রয়েড গাইড -->
+                    <div class="bg-slate-950/80 p-3.5 rounded-xl border border-slate-800/80">
+                        <h4 class="font-bold text-green-400 flex items-center gap-2 mb-2 text-xs uppercase tracking-wider">
+                            <i class="fa-brands fa-android text-base"></i> Android (Chrome / Opera)
+                        </h4>
+                        <ol class="list-decimal list-inside space-y-1.5 text-xs text-slate-300 font-medium">
+                            <li>ব্রাউজারের ডানদিকের উপরে <span class="text-white font-bold"><i class="fa-solid fa-ellipsis-vertical"></i> (৩ ডট)</span> আইকনে চাপুন।</li>
+                            <li>মেনু থেকে <span class="bg-slate-800 px-1.5 py-0.5 rounded text-white text-[11px] font-bold"><i class="fa-solid fa-circle-arrow-down"></i> Install App</span> অথবা <span class="text-white font-bold">Add to Home Screen</span>-এ চাপুন।</li>
+                            <li>কনফার্ম করলেই ২ সেকেন্ডে অ্যাপটি ফোনে ইনস্টল হয়ে যাবে!</li>
+                        </ol>
+                    </div>
+
+                    <!-- আইওএস গাইড -->
+                    <div class="bg-slate-950/80 p-3.5 rounded-xl border border-slate-800/80">
+                        <h4 class="font-bold text-sky-400 flex items-center gap-2 mb-2 text-xs uppercase tracking-wider">
+                            <i class="fa-brands fa-apple text-base"></i> iPhone / iOS (Safari)
+                        </h4>
+                        <ol class="list-decimal list-inside space-y-1.5 text-xs text-slate-300 font-medium">
+                            <li>সাফারি ব্রাউজারের নিচে থাকা <span class="text-white font-bold"><i class="fa-solid fa-share-nodes"></i> Share (শেয়ার)</span> বাটনে চাপুন।</li>
+                            <li>নিচের অপশনগুলো থেকে স্ক্রল করে <span class="bg-slate-800 px-1.5 py-0.5 rounded text-white text-[11px] font-bold"><i class="fa-solid fa-square-plus"></i> Add to Home Screen</span> চাপুন।</li>
+                            <li>ডানদিকের উপরে <span class="text-white font-bold">Add (যোগ করুন)</span> বাটনে ক্লিক করুন।</li>
+                        </ol>
+                    </div>
+                </div>
+
+                <button onclick="togglePwaGuideModal()" class="mt-5 w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl transition-all shadow-lg shadow-blue-500/20">
+                    ঠিক আছে, বুজেছি
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // ডায়নামিক ডেটাবেস ভেরিয়েবল
         let dataSet = { info: {}, channels: [] };
@@ -282,33 +331,40 @@
         let posX = 0, posY = 0, lastPosX = 0, lastPosY = 0;
         let isMultiTouch = false;
 
-        // PWA ইন্সটলেশন প্রোম্পট ভেরিয়েবল
+        // PWA ইনস্টলেশন প্রোম্পট ভেরিয়েবল
         let deferredPrompt;
         const installBtn = document.getElementById('pwa-install-btn');
 
-        // PWA ইন্সটল প্রোম্পট হ্যান্ডলার
+        // PWA ইনস্টল প্রোম্পট হ্যান্ডলার
         window.addEventListener('beforeinstallprompt', (e) => {
+            // ব্রাউজার যদি অটোমেটিক ইনস্টল সাপোর্ট করে তবে ইভেন্টটি সেভ করে রাখবো
             e.preventDefault();
             deferredPrompt = e;
-            if (installBtn) {
-                installBtn.classList.remove('hidden');
-            }
+            console.log('PWA automatic installation prompt is ready.');
         });
 
+        // ইনস্টল বাটনের ইন্টেলিজেন্ট ক্লিক ইভেন্ট
         if (installBtn) {
             installBtn.addEventListener('click', async () => {
-                if (!deferredPrompt) return;
-                deferredPrompt.prompt();
-                const { outcome } = await deferredPrompt.userChoice;
-                deferredPrompt = null;
-                installBtn.classList.add('hidden');
+                if (deferredPrompt) {
+                    // যদি ব্রাউজার সরাসরি ইনস্টল সাপোর্ট করে, তবে তা চালু করবে
+                    deferredPrompt.prompt();
+                    const { outcome } = await deferredPrompt.userChoice;
+                    console.log(`User response to install prompt: ${outcome}`);
+                    deferredPrompt = null;
+                } else {
+                    // যদি ব্রাউজার অটোমেটিক ইনস্টল সাপোর্ট না করে, তবে ইউজার ফ্রেন্ডলি গাইড দেখাবে
+                    togglePwaGuideModal();
+                }
             });
         }
 
         window.addEventListener('appinstalled', () => {
             console.log('LIVE IP TV PRO successfully installed!');
+            // ইনস্টল সফল হয়ে গেলে বাটনটির পালস অ্যানিমেশন বন্ধ করে দেবো
             if (installBtn) {
-                installBtn.classList.add('hidden');
+                installBtn.innerHTML = `<i class="fa-solid fa-circle-check text-lg lg:text-xl text-emerald-500 animate-none"></i>`;
+                installBtn.title = "অ্যাপটি ইতোমধ্যে ইনস্টল করা আছে";
             }
         });
 
@@ -343,11 +399,38 @@
             }
         }
 
-        // মডেলের বাইরে ক্লিক করলে মডেল বন্ধ হওয়ার ইভেন্ট
+        // PWA গাইড মডেল টগল ফাংশন
+        function togglePwaGuideModal() {
+            const modal = document.getElementById('pwa-guide-modal');
+            const content = modal.querySelector('div');
+            
+            if (modal.classList.contains('hidden')) {
+                modal.classList.remove('hidden');
+                setTimeout(() => {
+                    modal.classList.remove('opacity-0');
+                    content.classList.remove('scale-95');
+                    content.classList.add('scale-100');
+                }, 10);
+            } else {
+                modal.classList.add('opacity-0');
+                content.classList.remove('scale-100');
+                content.classList.add('scale-95');
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                }, 300);
+            }
+        }
+
+        // মডেলগুলোর বাইরে ক্লিক করলে বন্ধ হওয়ার ইভেন্ট
         window.addEventListener('click', (e) => {
-            const modal = document.getElementById('about-modal');
-            if (e.target === modal) {
+            const aboutModal = document.getElementById('about-modal');
+            const guideModal = document.getElementById('pwa-guide-modal');
+            
+            if (e.target === aboutModal) {
                 toggleAboutModal();
+            }
+            if (e.target === guideModal) {
+                togglePwaGuideModal();
             }
         });
 
