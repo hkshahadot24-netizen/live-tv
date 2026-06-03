@@ -130,10 +130,18 @@
                     <span class="text-[10px] lg:text-xs text-slate-400 font-medium hidden sm:inline-block">By Shahadot Hossain</span>
                 </h1>
             </div>
-            <!-- কুইক স্ট্যাটাস -->
-            <div class="text-[10px] lg:text-xs text-slate-300 font-semibold flex items-center gap-1.5 bg-slate-900/80 px-2.5 py-1.5 rounded-lg border border-slate-700/50 shadow-sm">
-                <span class="w-2 h-2 rounded-full bg-green-500 animate-ping"></span>
-                <span id="total-channels-badge">লোড হচ্ছে...</span>
+            
+            <div class="flex items-center gap-3">
+                <!-- এবাউট বাটন -->
+                <button onclick="toggleAboutModal()" class="text-slate-400 hover:text-blue-400 transition-colors p-1" title="ডেভেলপার ইনফো">
+                    <i class="fa-solid fa-circle-info text-lg lg:text-xl"></i>
+                </button>
+                
+                <!-- কুইক স্ট্যাটাস -->
+                <div class="text-[10px] lg:text-xs text-slate-300 font-semibold flex items-center gap-1.5 bg-slate-900/80 px-2.5 py-1.5 rounded-lg border border-slate-700/50 shadow-sm">
+                    <span class="w-2 h-2 rounded-full bg-green-500 animate-ping"></span>
+                    <span id="total-channels-badge">লোড হচ্ছে...</span>
+                </div>
             </div>
         </header>
 
@@ -194,6 +202,51 @@
         </footer>
     </section>
 
+    <!-- এবাউট মডেল (About Modal) -->
+    <div id="about-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm hidden opacity-0 transition-opacity duration-300">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl p-6 w-[90%] max-w-sm shadow-2xl transform scale-95 transition-transform duration-300 relative">
+            <!-- Close Button -->
+            <button onclick="toggleAboutModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors bg-slate-800 hover:bg-slate-700 rounded-full w-8 h-8 flex items-center justify-center">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+            
+            <div class="text-center mt-2">
+                <div class="w-16 h-16 bg-blue-600/20 text-blue-500 rounded-full flex items-center justify-center mx-auto mb-4 border border-blue-500/30 shadow-[0_0_15px_rgba(59,130,246,0.3)]">
+                    <i class="fa-solid fa-tv text-3xl"></i>
+                </div>
+                <h2 class="text-xl font-bold text-white mb-1">LIVE IP TV PRO</h2>
+                <p class="text-xs text-slate-400 mb-6 bg-slate-800 inline-block px-3 py-1 rounded-full border border-slate-700">ভার্সন v7.0 (API Based)</p>
+                
+                <div class="bg-slate-950 rounded-xl p-4 text-left border border-slate-800 space-y-4">
+                    <div class="flex items-center gap-4 border-b border-slate-800 pb-3">
+                        <div class="bg-slate-800 w-10 h-10 rounded-lg flex items-center justify-center text-slate-300 flex-shrink-0">
+                            <i class="fa-solid fa-code text-xl"></i>
+                        </div>
+                        <div>
+                            <p class="text-[11px] text-slate-500 font-bold uppercase tracking-wider">ডেভেলপার</p>
+                            <p class="text-sm font-bold text-slate-200">Shahadot Hossain</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-4 pt-1">
+                        <div class="bg-blue-500/10 w-10 h-10 rounded-lg flex items-center justify-center text-blue-500 flex-shrink-0">
+                            <i class="fa-brands fa-telegram text-2xl"></i>
+                        </div>
+                        <div>
+                            <p class="text-[11px] text-slate-500 font-bold uppercase tracking-wider">টেলিগ্রাম চ্যানেল</p>
+                            <a href="https://t.me/liveiptvpro" target="_blank" class="text-sm font-bold text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1.5">
+                                @liveiptvpro <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-5 text-[10px] text-slate-500 text-center">
+                    This playlist is for educational and testing purposes only.
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         // ডায়নামিক ডেটাবেস ভেরিয়েবল
         let dataSet = { info: {}, channels: [] };
@@ -213,6 +266,109 @@
         let startX = 0, startY = 0;
         let posX = 0, posY = 0, lastPosX = 0, lastPosY = 0;
         let isMultiTouch = false;
+
+        // এবাউট মডেল টগল ফাংশন
+        function toggleAboutModal() {
+            const modal = document.getElementById('about-modal');
+            const content = modal.querySelector('div');
+            
+            if (modal.classList.contains('hidden')) {
+                modal.classList.remove('hidden');
+                setTimeout(() => {
+                    modal.classList.remove('opacity-0');
+                    content.classList.remove('scale-95');
+                    content.classList.add('scale-100');
+                }, 10);
+            } else {
+                modal.classList.add('opacity-0');
+                content.classList.remove('scale-100');
+                content.classList.add('scale-95');
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                }, 300);
+            }
+        }
+
+        // মডেলের বাইরে ক্লিক করলে মডেল বন্ধ হওয়ার ইভেন্ট
+        window.addEventListener('click', (e) => {
+            const modal = document.getElementById('about-modal');
+            if (e.target === modal) {
+                toggleAboutModal();
+            }
+        });
+
+        // জনপ্রিয় টিভি চ্যানেলের লোগো লাইব্রেরি (উইকিমিডিয়া ও পাবলিক CDN থেকে)
+        const channelLogoMap = {
+            "somoy news tv": "https://upload.wikimedia.org/wikipedia/commons/0/03/Somoy_TV_Logo.png",
+            "somoy tv": "https://upload.wikimedia.org/wikipedia/commons/0/03/Somoy_TV_Logo.png",
+            "t sports hd": "https://upload.wikimedia.org/wikipedia/commons/b/ba/T_Sports_logo.png",
+            "t sports": "https://upload.wikimedia.org/wikipedia/commons/b/ba/T_Sports_logo.png",
+            "gazi tv": "https://upload.wikimedia.org/wikipedia/commons/b/be/Gazi_TV_Logo.png",
+            "gtv": "https://upload.wikimedia.org/wikipedia/commons/b/be/Gazi_TV_Logo.png",
+            "btv": "https://upload.wikimedia.org/wikipedia/commons/2/23/Bangladesh_Television_logo.png",
+            "channel 24": "https://upload.wikimedia.org/wikipedia/commons/7/77/Channel_24_logo.png",
+            "ekattor hd 71": "https://upload.wikimedia.org/wikipedia/commons/9/9f/Ekattor_TV_logo.png",
+            "ekattor tv": "https://upload.wikimedia.org/wikipedia/commons/9/9f/Ekattor_TV_logo.png",
+            "jumuna tv": "https://upload.wikimedia.org/wikipedia/commons/6/60/Jamuna_TV_Logo.png",
+            "jamuna tv": "https://upload.wikimedia.org/wikipedia/commons/6/60/Jamuna_TV_Logo.png",
+            "independent tv": "https://upload.wikimedia.org/wikipedia/commons/f/fb/Independent_Television_logo.png",
+            "independent tv ": "https://upload.wikimedia.org/wikipedia/commons/f/fb/Independent_Television_logo.png",
+            "ntv": "https://upload.wikimedia.org/wikipedia/commons/c/cb/NTV_Bangladesh_Logo.png",
+            "channel i": "https://upload.wikimedia.org/wikipedia/commons/d/de/Channel_i_logo.png",
+            "dipto tv": "https://upload.wikimedia.org/wikipedia/commons/8/87/Deepto_TV_logo.png",
+            "boishakhi tv": "https://upload.wikimedia.org/wikipedia/commons/2/2a/Boishakhi_TV_Logo.png",
+            "ekushey tv": "https://upload.wikimedia.org/wikipedia/commons/8/83/Ekushey_TV_logo.png",
+            "desh tv": "https://upload.wikimedia.org/wikipedia/commons/2/22/Desh_TV_logo.png",
+            "cartoon network": "https://upload.wikimedia.org/wikipedia/commons/b/bb/Cartoon_Network_logo.svg",
+            "pbs kids": "https://upload.wikimedia.org/wikipedia/commons/a/a2/PBS_Kids_logo_2022.svg",
+            "cnn (us)": "https://upload.wikimedia.org/wikipedia/commons/b/b1/CNN.svg",
+            "cnn": "https://upload.wikimedia.org/wikipedia/commons/b/b1/CNN.svg",
+            "dw news": "https://upload.wikimedia.org/wikipedia/commons/5/5b/Deutsche_Welle_logo_2012.svg",
+            "dw english": "https://upload.wikimedia.org/wikipedia/commons/5/5b/Deutsche_Welle_logo_2012.svg",
+            "dw english _": "https://upload.wikimedia.org/wikipedia/commons/5/5b/Deutsche_Welle_logo_2012.svg",
+            "france news 24": "https://upload.wikimedia.org/wikipedia/commons/8/82/France_24_logo.svg",
+            "france 24 english": "https://upload.wikimedia.org/wikipedia/commons/8/82/France_24_logo.svg",
+            "trt world": "https://upload.wikimedia.org/wikipedia/commons/3/37/TRT_World_logo.svg",
+            "press tv iran": "https://upload.wikimedia.org/wikipedia/commons/c/c2/Press_TV_Logo.svg",
+            "nhk world": "https://upload.wikimedia.org/wikipedia/commons/d/dd/NHK_World_Japan_logo.svg",
+            "kolkata tv": "https://upload.wikimedia.org/wikipedia/commons/b/b3/Kolkata_TV_logo.png",
+            "star sports 1 hd": "https://upload.wikimedia.org/wikipedia/commons/c/cc/Star_Sports_logo.svg",
+            "sky sports cricket": "https://upload.wikimedia.org/wikipedia/commons/a/ad/Sky_Sports_logo.svg",
+            "bein sports 1": "https://upload.wikimedia.org/wikipedia/commons/7/7f/BeIN_Sports_logo.svg",
+            "star gold": "https://upload.wikimedia.org/wikipedia/commons/4/4e/Star_Gold_logo.png",
+            "starjalsha hd": "https://upload.wikimedia.org/wikipedia/commons/6/60/Star_Jalsha_Logo.png",
+            "zee cinema hd": "https://upload.wikimedia.org/wikipedia/commons/d/df/Zee_Cinema_logo_2017.svg",
+            "sony sports ten 3 hd": "https://upload.wikimedia.org/wikipedia/commons/5/55/Sony_Sports_Network_logo.svg",
+            "goldmines": "https://upload.wikimedia.org/wikipedia/commons/3/30/Goldmines_Telefilms_Logo.png",
+            "goldmines movies": "https://upload.wikimedia.org/wikipedia/commons/3/30/Goldmines_Telefilms_Logo.png",
+            "goldmines movies 2": "https://upload.wikimedia.org/wikipedia/commons/3/30/Goldmines_Telefilms_Logo.png",
+            "goldmines bollywood": "https://upload.wikimedia.org/wikipedia/commons/3/30/Goldmines_Telefilms_Logo.png",
+            "a sports hd": "https://upload.wikimedia.org/wikipedia/commons/f/fe/A-Sports_logo.png",
+            "ptv sports hd": "https://upload.wikimedia.org/wikipedia/commons/5/54/PTV_Sports_Logo.png",
+            "ptv sports": "https://upload.wikimedia.org/wikipedia/commons/5/54/PTV_Sports_Logo.png",
+            "news max 2": "https://upload.wikimedia.org/wikipedia/commons/a/aa/Newsmax_logo_2020.svg",
+            "deshi tv": "https://assets.deshitv.net/logo.png"
+        };
+
+        // নির্দিষ্ট কোনো চ্যানেলের ডাইনামিক লোগো খোঁজা
+        function getChannelLogoUrl(name) {
+            const cleaned = name.toLowerCase()
+                .replace(/\s*\(.*?\)\s*/g, '') // বন্ধনী (যেমন: (1080p), (720p)) বাদ দেওয়া
+                .replace(/\s+hd/gi, '')         // 'HD' বা 'hd' লেখা বাদ দেওয়া
+                .trim();
+            
+            // আমাদের ম্যাপিংয়ে থাকলে সেটি রিটার্ন করবে
+            if (channelLogoMap[cleaned]) {
+                return channelLogoMap[cleaned];
+            }
+            if (channelLogoMap[name.toLowerCase().trim()]) {
+                return channelLogoMap[name.toLowerCase().trim()];
+            }
+            
+            // ডিফাল্ট হিসেবে IPTV-Org এর লোগো রিপোজিটরি থেকে ট্রাই করার লিঙ্ক
+            const idFriendly = cleaned.replace(/[^a-z0-9]/gi, '');
+            return `https://iptv-org.github.io/iptv/logos/${idFriendly}.png`;
+        }
 
         function getChannelLogoStyles(name) {
             const hash = name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
@@ -456,6 +612,7 @@
             filtered.forEach(ch => {
                 const isActive = (ch.url === currentActiveUrl);
                 const logoInfo = getChannelLogoStyles(ch.name);
+                const logoUrl = getChannelLogoUrl(ch.name);
                 const isMp4 = ch.url.endsWith('.mp4') || ch.url.endsWith('.mkv');
                 
                 const card = document.createElement('div');
@@ -479,8 +636,14 @@
 
                 card.innerHTML = `
                     <div class="flex items-center gap-3.5 min-w-0 flex-grow" onclick="playChannel('${ch.url}', true)">
-                        <div class="w-11 h-11 rounded-xl flex-shrink-0 flex items-center justify-center font-black text-sm text-white shadow-md bg-gradient-to-tr ${logoInfo.gradient}">
-                            ${logoInfo.text}
+                        <!-- সুন্দর গ্রেডিয়েন্ট ব্যাকগ্রাউন্ড সহ লোগো বক্স -->
+                        <div class="w-11 h-11 rounded-xl flex-shrink-0 flex items-center justify-center font-black text-sm text-white shadow-md bg-slate-800 relative overflow-hidden">
+                            <!-- লোগো লোড হওয়ার আগে ডিফাল্ট গ্রেডিয়েন্ট মনোগ্রাম ব্যাকগ্রাউন্ড হিসেবে থাকবে -->
+                            <div class="absolute inset-0 flex items-center justify-center bg-gradient-to-tr ${logoInfo.gradient}">
+                                ${logoInfo.text}
+                            </div>
+                            <!-- আসল লোগো ইমেজ (সফলভাবে লোড হলে উপরে মসৃণভাবে ভেসে উঠবে) -->
+                            <img src="${logoUrl}" alt="${ch.name}" class="absolute inset-0 w-full h-full object-contain p-1.5 bg-slate-900/90 transition-opacity duration-300 opacity-0" onload="this.classList.remove('opacity-0')" onerror="this.style.display='none'">
                         </div>
                         <div class="min-w-0">
                             <h4 class="text-sm font-bold truncate ${isActive ? 'text-blue-400' : 'text-slate-200 group-hover:text-white'}">${ch.name}</h4>
